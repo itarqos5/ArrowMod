@@ -1,0 +1,10 @@
+plugins {
+    id 'dev.architectury.loom'
+    id 'maven-publish'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+}

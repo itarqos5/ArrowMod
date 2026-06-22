@@ -1,0 +1,29 @@
+.gradle/
+build/
+run/
+runClient/
+runServer/
+runPaper/
+out/
+classes/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Misc
+*.jar
+!gradle/wrapper/gradle-wrapper.jar

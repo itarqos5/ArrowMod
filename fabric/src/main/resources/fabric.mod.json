@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "arrowandslots",
+  "version": "${version}",
+  "name": "Arrow & Slots",
+  "description": "Enhances archery by drawing ammunition from the hotbar slot directly above your bow, so every shot uses the matching arrow without needing to select it.",
+  "authors": [
+    "Literal"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+  "license": "MIT",
+  "icon": "assets/arrowandslots/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "gg.literal.arrowandslots.fabric.ArrowAndSlotsFabric"
+    ]
+  },
+  "mixins": [
+    "arrowandslots.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

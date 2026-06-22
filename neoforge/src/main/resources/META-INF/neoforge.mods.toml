@@ -1,0 +1,28 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+issueTrackerURL = ""
+
+[[mods]]
+modId = "arrowandslots"
+version = "${version}"
+displayName = "Arrow & Slots"
+description = "Enhances archery by drawing ammunition from the hotbar slot directly above your bow, so every shot uses the matching arrow without needing to select it."
+authors = "Literal"
+
+[[dependencies.arrowandslots]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.arrowandslots]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[mixins]]
+config = "arrowandslots.mixins.json"

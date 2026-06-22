@@ -1,0 +1,28 @@
+plugins {
+    id 'dev.architectury.loom'
+    id 'maven-publish'
+}
+
+dependencies {
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive false }
+}
+
+loom {
+    runs {
+        client {
+            client()
+            setConfigName('NeoForge Client')
+            ideConfigGenerated(true)
+            runDir('run')
+        }
+        server {
+            server()
+            setConfigName('NeoForge Server')
+            ideConfigGenerated(true)
+            runDir('run')
+        }
+    }
+}
