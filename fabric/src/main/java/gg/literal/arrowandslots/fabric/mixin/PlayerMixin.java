@@ -11,12 +11,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Player.class)
 public abstract class PlayerMixin {
 
-    @Inject(method = "getProjectile", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getProjectile", at = @At("RETURN"), cancellable = true, require = 0)
     private void arrowandslots$getArrowFromSlotAbove(ItemStack weaponStack, CallbackInfoReturnable<ItemStack> cir) {
-        Player self = (Player) (Object) this;
-        ItemStack arrow = ArrowSlotHelper.findArrowAbove(self);
-        if (arrow != null) {
-            cir.setReturnValue(arrow);
+        try {
+            Player self = (Player) (Object) this;
+            ItemStack arrow = ArrowSlotHelper.findArrowAbove(self);
+            if (arrow != null) {
+                cir.setReturnValue(arrow);
+            }
+        } catch (Exception ignored) {
         }
     }
 }

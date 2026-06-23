@@ -33,31 +33,60 @@ The original wording was ambiguous, so it has been rewritten to describe the act
 
 ### Technology Stack
 
-- **Minecraft:** 1.21.1 – 26.1.2 (targets 26.1.2)
+- **Minecraft:** 1.21.1 – 26.1.2 (builds against 1.21.1)
 - **Java:** 21
 - **Build tool:** Gradle 8.11+ with the Gradle wrapper
 - **Multi-loader plugin:** Architectury Loom
 - **Mappings:** Official Mojang mappings
 - **Loaders:**
   - Fabric Loader 0.19.3
-  - Fabric API 0.152.1+26.1.2
-  - NeoForge 26.1.2.76
+  - Fabric API 0.116.12+1.21.1
+  - NeoForge 21.1.234
 - **Server platform:**
-  - Paper API 26.1.2-R0.1-SNAPSHOT
+  - Paper API 1.21.1-R0.1-SNAPSHOT
+
+### Version Compatibility Strategy
+
+The mod is compiled against **MC 1.21.1** (the lowest supported version) so
+its bytecode uses intermediary / SRG names that are stable across the full
+range. Official Mojang mappings guarantee that names like `Player#getProjectile`
+and `ArrowItem` are identical from 1.21.1 through 26.1.2.
+
+Defensive measures prevent crashes on any version in the range:
+
+| Layer | Guard |
+|-------|-------|
+| `ArrowSlotHelper.findArrowAbove` | Full try-catch, returns `null` on any failure |
+| `PlayerMixin` (Fabric / NeoForge) | `@Inject(require = 0)` — injection is silently skipped if the target method is absent or renamed |
+| `BowShootListener` (Paper) | try-catch around the entire handler; `applyPotionData` has its own inner try-catch for API changes |
+
+If a future MC version renames `Player#getProjectile` or changes its signature,
+the Mixin will skip instead of crashing, and the mod simply won't override
+ammo selection on that version. Rebuilding against the newer toolchain restores
+the behavior.
+
+### Metadata Version Ranges
+
+| File | Dependency | Range | Covers |
+|------|-----------|-------|--------|
+| `fabric.mod.json` | `minecraft` | `>=1.21.1` | 1.21.1 – 26.1.2+ |
+| `fabric.mod.json` | `fabricloader` | `>=0.16.0` | 0.19.3+ |
+| `neoforge.mods.toml` | `minecraft` | `[1.21.1,)` | 1.21.1 – 26.1.2+ |
+| `neoforge.mods.toml` | `neoforge` | `[21.1.0,)` | 21.1.x through 26.1.x |
+| `plugin.yml` | `api-version` | `1.21` | Paper 1.21.1 through 26.1.2 |
 
 ## Roadmap
 
-1. **Environment setup** (current step)
+1. **Environment setup** ✔
    - Gradle project with `common`, `fabric`, `neoforge`, and `paper` modules.
    - Skeleton entry-point classes and loader metadata.
    - Documentation and `.gitignore`.
-2. **Core logic** (next step)
-   - Detect bow draw events.
-   - Locate the slot above the bow in the player's hotbar.
-   - Consume and shoot the matching arrow.
-3. **Loader integration**
-   - Wire common logic into Fabric and NeoForge events.
-   - Implement the equivalent behavior in the Paper plugin.
+2. **Core logic** ✔
+   - `ArrowSlotHelper` locates the arrow in hotbar slot +9.
+   - Wrapped in try-catch for version safety.
+3. **Loader integration** ✔
+   - Fabric/NeoForge: Mixin on `Player#getProjectile` (`require = 0`).
+   - Paper: `EntityShootBowEvent` listener with defensive arrow launch.
 4. **Testing & polish**
    - Validate on dedicated server and single-player.
    - Crossbow support and edge cases (empty slot, non-arrow items).
@@ -74,12 +103,18 @@ feat: implement slot-based arrow selection for Fabric, NeoForge and Paper
   AbstractArrow of the correct material (ARROW / TIPPED_ARROW /
   SPECTRAL_ARROW), copying potion data for tipped arrows, then decrements
   the upper slot for non-creative players.
-- Target Minecraft 26.1.2; metadata declares support for [1.21.1,) so
-  servers running anything from 1.21.1 onward can install the mod.
+- Build against MC 1.21.1; metadata declares support for [1.21.1,) so
+  the single jar works across the full 1.21.1–26.1.2 range.
+- All injected code is wrapped in try-catch with require=0 on Mixin
+  targets so the mod degrades gracefully instead of crashing if an API
+  changes between MC versions.
 - Switch group id to gg.literal, author to Literal, and refresh docs.
 ```
 
 ## Notes
 
 - The Paper module does not share code with `common/` because Bukkit's API is separate from the Minecraft codebase used by the mod loaders.
+- The single jar works across the 1.21.1 – 26.1.2 range because official Mojang mappings keep class and method names stable. The Mixin target `Player#getProjectile(ItemStack)` has the same name and signature in both versions.
+- If a future MC version breaks the Mixin target, `require = 0` causes the injection to be silently skipped rather than crashing the game. The mod just stops overriding ammo selection on that version.
+- Rebuilding against the newer MC toolchain (changing `minecraft_version` in `gradle.properties` and updating loader/API versions) restores full behavior.
 - Future iterations may add configuration files per platform.

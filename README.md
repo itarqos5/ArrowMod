@@ -30,6 +30,22 @@ ArrowMod/
 └── settings.gradle
 ```
 
+## Supported Versions
+
+| Platform | Supported MC versions | Notes |
+|----------|----------------------|-------|
+| Fabric | 1.21.1 – 26.1.2 | Built against 1.21.1; metadata declares `>=1.21.1` |
+| NeoForge | 1.21.1 – 26.1.2 | NeoForge 21.1+ through 26.1+ |
+| Paper | 1.21.1 – 26.1.2 | `api-version: '1.21'` |
+
+The jar is compiled against MC 1.21.1 with official Mojang mappings.
+All injected code is wrapped in try-catch with `require = 0` on Mixin targets
+so it degrades gracefully instead of crashing if an API changes between versions.
+
+If you hit issues on a newer MC version, rebuild the mod against that version's
+toolchain — the Mixin target (`Player#getProjectile`) and class names are
+stable across all supported versions under official mappings.
+
 ## Requirements
 
 - Java 21 or newer
