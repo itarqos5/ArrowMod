@@ -7,5 +7,9 @@ neoForge {
 }
 
 dependencies {
-    implementation project(':common')
+    implementation project(path: ':common')
+}
+
+jar {
+    from(project(':common').sourceSets.main.output.classesDirs)
 }
