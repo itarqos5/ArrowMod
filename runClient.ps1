@@ -68,18 +68,18 @@ function Pick($title, $items, $sel=0) {
     }
 }
 
-$vi = Pick "Select Minecraft version:" ($versions | % { $_.L })
+$vi = Pick "Select Minecraft version:" ($versions | ForEach-Object { $_.L })
 $ver = $versions[$vi]
 
-$mi = Pick "MC $($ver.MC) — select mode:" ($modes | % { $_.L })
-$mod = $modes[$mi]
+$mi = Pick ("MC {0} - select mode:" -f $ver.MC) ($modes | ForEach-Object { $_.L })
+$chosen = $modes[$mi]
 
 Clear-Host
 Write-Host ""
-Write-Host "  Building $($mod.L) for MC $($ver.MC) ..." -ForegroundColor Cyan
+Write-Host ("  Building {0} for MC {1} ..." -f $chosen.L, $ver.MC) -ForegroundColor Cyan
 Write-Host ""
 
-$ga = @($mod.B, "--no-daemon", "--warning-mode", "summary",
+$ga = @($chosen.B, "--no-daemon", "--warning-mode", "summary",
     "-Pminecraft_version=$($ver.MC)",
     "-Pfabric_api_version=$($ver.FA)",
     "-Pneoforge_version=$($ver.NF)",
@@ -88,31 +88,32 @@ $ga = @($mod.B, "--no-daemon", "--warning-mode", "summary",
 & gradle @ga
 if ($LASTEXITCODE -ne 0) { Write-Host "`n  Build failed." -ForegroundColor Red; exit 1 }
 
-if ($mod.R -eq "paper") {
-    $sd = "$PSScriptRoot\paper-server"
-    $pj = "$sd\paper.jar"
-    New-Item -ItemType Directory -Path "$sd\plugins" -Force | Out-Null
-    if (!(Test-Path "$sd\eula.txt")) { "eula=true" | Set-Content "$sd\eula.txt" }
+if ($chosen.R -eq "paper") {
+    $sd = Join-Path $PSScriptRoot "paper-server"
+    $pj = Join-Path $sd "paper.jar"
+    New-Item -ItemType Directory -Path (Join-Path $sd "plugins") -Force | Out-Null
+    if (!(Test-Path (Join-Path $sd "eula.txt"))) { "eula=true" | Set-Content (Join-Path $sd "eula.txt") }
 
-    $jar = Get-ChildItem "$PSScriptRoot\paper\build\libs\*.jar" |
-        Where-Object { $_.Name -notmatch 'sources' } | Sort-Object LastWriteTime -Desc | Select -First 1
-    Copy-Item $jar.FullName "$sd\plugins\$($jar.Name)" -Force
+    $jar = Get-ChildItem (Join-Path $PSScriptRoot "paper\build\libs\*.jar") |
+        Where-Object { $_.Name -notmatch 'sources' } | Sort-Object LastWriteTime -Desc | Select-Object -First 1
+    Copy-Item $jar.FullName (Join-Path $sd "plugins\$($jar.Name)") -Force
 
     if (!(Test-Path $pj)) {
-        Write-Host "  Downloading Paper $($ver.MC) ..." -ForegroundColor Yellow
+        Write-Host ("  Downloading Paper {0} ..." -f $ver.MC) -ForegroundColor Yellow
         try {
-            $b = (Invoke-RestMethod "https://api.papermc.io/v2/projects/paper/versions/$($ver.MC)/builds").builds[-1]
-            Invoke-WebRequest "https://api.papermc.io/v2/projects/paper/versions/$($ver.MC)/builds/$($b.build)/downloads/$($b.downloads.application.name)" -OutFile $pj
-        } catch { Write-Host "  Download failed: $_" -ForegroundColor Red; exit 1 }
+            $b = (Invoke-RestMethod ("https://api.papermc.io/v2/projects/paper/versions/{0}/builds" -f $ver.MC)).builds[-1]
+            $url = "https://api.papermc.io/v2/projects/paper/versions/{0}/builds/{1}/downloads/{2}" -f $ver.MC, $b.build, $b.downloads.application.name
+            Invoke-WebRequest $url -OutFile $pj
+        } catch { Write-Host ("  Download failed: {0}" -f $_) -ForegroundColor Red; exit 1 }
     }
-    if (!(Test-Path "$sd\server.properties")) {
-        "online-mode=false","motd=Arrow & Slots Test","level-type=flat","gamemode=creative" | Set-Content "$sd\server.properties"
+    if (!(Test-Path (Join-Path $sd "server.properties"))) {
+        @("online-mode=false","motd=Arrow and Slots Test","level-type=flat","gamemode=creative") | Set-Content (Join-Path $sd "server.properties")
     }
 
     Write-Host "  Starting Paper server ..." -ForegroundColor Green
     Push-Location $sd; try { java -Xmx2G -Xms1G -jar paper.jar --nogui } finally { Pop-Location }
 } else {
-    Write-Host "  Launching $($mod.L) ..." -ForegroundColor Green
+    Write-Host ("  Launching {0} ..." -f $chosen.L) -ForegroundColor Green
     Write-Host ""
-    & gradle $mod.R --no-daemon --warning-mode summary
+    & gradle $chosen.R --no-daemon --warning-mode summary
 }
