@@ -4,7 +4,6 @@
   "package": "gg.literal.arrowandslots.neoforge.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "InventoryAccessor",
     "PlayerMixin"
   ],
   "injectors": {
