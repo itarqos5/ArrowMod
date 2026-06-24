@@ -19,7 +19,7 @@ public final class ArrowSlotHelper {
             Inventory inv = player.getInventory();
             int selected = -1;
             for (int i = 0; i < 9; i++) {
-                if (inv.getItem(i) == mainHand) { selected = i; break; }
+                if (ItemStack.matches(inv.getItem(i), mainHand)) { selected = i; break; }
             }
             if (selected == -1) return null;
             int aboveSlot = selected + 9;

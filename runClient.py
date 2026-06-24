@@ -111,4 +111,6 @@ if mode["r"] == "paper":
     subprocess.run(["java", "-Xmx2G", "-Xms1G", "-jar", "paper.jar", "--nogui"], cwd=sd)
 else:
     print(f"  {GR}Launching {mode['l']} ...{S}\n")
-    subprocess.run(["gradle", mode["r"], "--no-daemon", "--warning-mode", "summary"])
+    subprocess.run(["gradle", mode["r"], "--no-daemon", "--warning-mode", "summary",
+        f"-Pminecraft_version={ver['mc']}", f"-Pfabric_api_version={ver['fa']}",
+        f"-Pneoforge_version={ver['nf']}", f"-Ppaper_version={ver['pa']}"])
