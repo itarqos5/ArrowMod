@@ -10,41 +10,23 @@ import org.jetbrains.annotations.Nullable;
 public final class ArrowSlotHelper {
     private ArrowSlotHelper() {}
 
-    /**
-     * Returns the arrow ItemStack from the inventory slot directly above the bow
-     * (bowSlot + 9), or null if no usable arrow is found there.
-     *
-     * Slot identification strategy:
-     *  1. Object-identity check  – fast; works when weaponStack IS the inventory slot reference.
-     *  2. isSameItemSameComponents – handles the case where Minecraft stores a copy
-     *     of the use-item (e.g. in LivingEntity.useItem on some versions).
-     */
     @Nullable
     public static ItemStack findArrowAbove(Player player, ItemStack weaponStack) {
         try {
             if (weaponStack.isEmpty() || !(weaponStack.getItem() instanceof BowItem)) return null;
 
+            ItemStack mainHand = player.getMainHandItem();
+            if (mainHand.isEmpty() || !(mainHand.getItem() instanceof BowItem)) return null;
+            if (!ItemStack.isSameItemSameComponents(mainHand, weaponStack)) return null;
+
             Inventory inv = player.getInventory();
             int bowSlot = -1;
 
-            // Pass 1 – identity (same object reference)
+            // The selected hotbar slot is the one whose stack is the player's current main-hand stack.
             for (int i = 0; i < 9; i++) {
-                if (inv.getItem(i) == weaponStack) {
+                if (inv.getItem(i) == mainHand) {
                     bowSlot = i;
                     break;
-                }
-            }
-
-            // Pass 2 – full component match (handles copied stacks)
-            if (bowSlot == -1) {
-                for (int i = 0; i < 9; i++) {
-                    ItemStack s = inv.getItem(i);
-                    if (!s.isEmpty()
-                            && s.getItem() instanceof BowItem
-                            && ItemStack.isSameItemSameComponents(s, weaponStack)) {
-                        bowSlot = i;
-                        break;
-                    }
                 }
             }
 
