@@ -15,7 +15,8 @@ public abstract class PlayerMixin {
     private void arrowandslots$getArrowFromSlotAbove(ItemStack weaponStack, CallbackInfoReturnable<ItemStack> cir) {
         try {
             Player self = (Player) (Object) this;
-            ItemStack arrow = ArrowSlotHelper.findArrowAbove(self);
+            int bowSlot = ((InventoryAccessor) (Object) self.getInventory()).getSelected();
+            ItemStack arrow = ArrowSlotHelper.findArrowAbove(self, bowSlot);
             if (arrow != null) {
                 cir.setReturnValue(arrow);
             }

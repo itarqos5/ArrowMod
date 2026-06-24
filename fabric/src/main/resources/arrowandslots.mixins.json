@@ -4,6 +4,7 @@
   "package": "gg.literal.arrowandslots.fabric.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "InventoryAccessor",
     "PlayerMixin"
   ],
   "injectors": {
