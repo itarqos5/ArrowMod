@@ -17,7 +17,11 @@ public final class ArrowSlotHelper {
             if (mainHand.isEmpty() || !(mainHand.getItem() instanceof BowItem)) return null;
 
             Inventory inv = player.getInventory();
-            int selected = inv.selected;
+            int selected = -1;
+            for (int i = 0; i < 9; i++) {
+                if (inv.getItem(i) == mainHand) { selected = i; break; }
+            }
+            if (selected == -1) return null;
             int aboveSlot = selected + 9;
             if (aboveSlot < 0 || aboveSlot >= inv.getContainerSize()) return null;
 
