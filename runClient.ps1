@@ -1,107 +1,118 @@
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$props = Get-Content "$PSScriptRoot\gradle.properties" -Raw
-$mcVersion = ($props | Select-String -Pattern '(?m)^minecraft_version=(.+)$').Matches[0].Groups[1].Value.Trim()
-
+$versions = @(
+    @{ L="1.21.1 (min)"; MC="1.21.1"; FA="0.116.12+1.21.1"; NF="21.1.234";          PA="1.21.1-R0.1-SNAPSHOT" },
+    @{ L="1.21.2";        MC="1.21.2"; FA="0.102.3+1.21.2";  NF="21.2.89-beta";      PA="1.21.2-R0.1-SNAPSHOT" },
+    @{ L="26.1.2 (max)";  MC="26.1.2"; FA="0.145.4+26.1.2";  NF="26.1.2.76";         PA="26.1.2-R0.1-SNAPSHOT" }
+)
 $modes = @(
-    @{ Label = "Fabric Client";   Build = ":fabric:remapJar"; Run = ":fabric:runClient" },
-    @{ Label = "Fabric Server";   Build = ":fabric:remapJar"; Run = ":fabric:runServer" },
-    @{ Label = "NeoForge Client"; Build = ":neoforge:jar";    Run = ":neoforge:runClient" },
-    @{ Label = "NeoForge Server"; Build = ":neoforge:jar";    Run = ":neoforge:runServer" },
-    @{ Label = "Paper Server";    Build = ":paper:jar";       Run = "paper" }
+    @{ L="Fabric Client";    B=":fabric:remapJar"; R=":fabric:runClient" },
+    @{ L="Fabric Server";    B=":fabric:remapJar"; R=":fabric:runServer" },
+    @{ L="NeoForge Client";  B=":neoforge:jar";    R=":neoforge:runClient" },
+    @{ L="NeoForge Server";  B=":neoforge:jar";    R=":neoforge:runServer" },
+    @{ L="Paper Server";     B=":paper:jar";        R="paper" }
 )
 
-Write-Host ""
-Write-Host "  Arrow & Slots - Launcher"
-Write-Host "  ========================"
-Write-Host "  Minecraft $mcVersion"
-Write-Host ""
-for ($i = 0; $i -lt $modes.Count; $i++) {
-    Write-Host "    [$($i + 1)] $($modes[$i].Label)"
-}
-Write-Host ""
-$choice = Read-Host "  Select (1-$($modes.Count))"
+function Pick($title, $items, $sel=0) {
+    while ($true) {
+        Clear-Host
+        $w = 38
+        $bar = "".PadLeft($w - 2, [char]0x2500)
 
-$idx = [int]$choice - 1
-if ($idx -lt 0 -or $idx -ge $modes.Count) {
-    Write-Host "Invalid choice."
-    exit 1
-}
+        Write-Host ""
+        Write-Host ("  {0}{1}{2}" -f [char]0x250C, $bar, [char]0x2510) -ForegroundColor DarkCyan
+        Write-Host ("  {0}{1}{2}" -f [char]0x2502, "".PadLeft($w-2), [char]0x2502) -ForegroundColor DarkCyan
 
-$selected = $modes[$idx]
+        $header = "  Arrow & Slots"
+        Write-Host "  $([char]0x2502)" -ForegroundColor DarkCyan -NoNewline
+        Write-Host $header -ForegroundColor White -NoNewline
+        Write-Host "".PadLeft($w - 3 - $header.Length) -NoNewline
+        Write-Host "$([char]0x2502)" -ForegroundColor DarkCyan
 
-Write-Host ""
-Write-Host "  Building $($selected.Build)..."
-gradle $selected.Build --no-daemon --warning-mode summary
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Build failed."
-    exit 1
-}
+        $sub = "  $title"
+        Write-Host "  $([char]0x2502)" -ForegroundColor DarkCyan -NoNewline
+        Write-Host $sub -ForegroundColor DarkGray -NoNewline
+        Write-Host "".PadLeft($w - 3 - $sub.Length) -NoNewline
+        Write-Host "$([char]0x2502)" -ForegroundColor DarkCyan
 
-if ($selected.Run -eq "paper") {
-    # ---- Paper / Folia server ----
-    $serverDir = "$PSScriptRoot\paper-server"
-    $pluginsDir = "$serverDir\plugins"
-    $serverJar = "$serverDir\paper.jar"
-    $eulaFile = "$serverDir\eula.txt"
+        Write-Host ("  {0}{1}{2}" -f [char]0x2502, "".PadLeft($w-2), [char]0x2502) -ForegroundColor DarkCyan
 
-    New-Item -ItemType Directory -Path $pluginsDir -Force | Out-Null
+        for ($i = 0; $i -lt $items.Count; $i++) {
+            Write-Host "  $([char]0x2502)" -ForegroundColor DarkCyan -NoNewline
+            if ($i -eq $sel) {
+                Write-Host "  $([char]0x25B8) " -ForegroundColor Black -BackgroundColor Green -NoNewline
+                Write-Host ("  $($items[$i])").PadRight($w - 6) -ForegroundColor Black -BackgroundColor Green -NoNewline
+            } else {
+                Write-Host "    $($items[$i])".PadRight($w - 3) -ForegroundColor DarkGray -NoNewline
+            }
+            Write-Host "$([char]0x2502)" -ForegroundColor DarkCyan
+        }
 
-    if (-not (Test-Path $eulaFile)) {
-        "eula=true" | Set-Content $eulaFile
+        Write-Host ("  {0}{1}{2}" -f [char]0x2502, "".PadLeft($w-2), [char]0x2502) -ForegroundColor DarkCyan
+        $hint = "  [up/down] navigate   [enter] select"
+        Write-Host "  $([char]0x2502)" -ForegroundColor DarkCyan -NoNewline
+        Write-Host $hint -ForegroundColor DarkGray -NoNewline
+        Write-Host "".PadLeft($w - 3 - $hint.Length) -NoNewline
+        Write-Host "$([char]0x2502)" -ForegroundColor DarkCyan
+        Write-Host ("  {0}{1}{2}" -f [char]0x2514, $bar, [char]0x2518) -ForegroundColor DarkCyan
+        Write-Host ""
+
+        $k = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        switch ($k.VirtualKeyCode) {
+            38 { if ($sel -gt 0) { $sel-- } }
+            40 { if ($sel -lt $items.Count - 1) { $sel++ } }
+            13 { return $sel }
+            27 { exit 0 }
+        }
     }
+}
 
-    # Copy the plugin jar
+$vi = Pick "Select Minecraft version:" ($versions | % { $_.L })
+$ver = $versions[$vi]
+
+$mi = Pick "MC $($ver.MC) — select mode:" ($modes | % { $_.L })
+$mod = $modes[$mi]
+
+Clear-Host
+Write-Host ""
+Write-Host "  Building $($mod.L) for MC $($ver.MC) ..." -ForegroundColor Cyan
+Write-Host ""
+
+$ga = @($mod.B, "--no-daemon", "--warning-mode", "summary",
+    "-Pminecraft_version=$($ver.MC)",
+    "-Pfabric_api_version=$($ver.FA)",
+    "-Pneoforge_version=$($ver.NF)",
+    "-Ppaper_version=$($ver.PA)")
+
+& gradle @ga
+if ($LASTEXITCODE -ne 0) { Write-Host "`n  Build failed." -ForegroundColor Red; exit 1 }
+
+if ($mod.R -eq "paper") {
+    $sd = "$PSScriptRoot\paper-server"
+    $pj = "$sd\paper.jar"
+    New-Item -ItemType Directory -Path "$sd\plugins" -Force | Out-Null
+    if (!(Test-Path "$sd\eula.txt")) { "eula=true" | Set-Content "$sd\eula.txt" }
+
     $jar = Get-ChildItem "$PSScriptRoot\paper\build\libs\*.jar" |
-        Where-Object { $_.Name -notmatch '-sources' } |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    Copy-Item $jar.FullName "$pluginsDir\$($jar.Name)" -Force
-    Write-Host "  Plugin: $($jar.Name)"
+        Where-Object { $_.Name -notmatch 'sources' } | Sort-Object LastWriteTime -Desc | Select -First 1
+    Copy-Item $jar.FullName "$sd\plugins\$($jar.Name)" -Force
 
-    # Download Paper server if missing
-    if (-not (Test-Path $serverJar)) {
-        Write-Host "  Downloading Paper $mcVersion (latest build)..."
+    if (!(Test-Path $pj)) {
+        Write-Host "  Downloading Paper $($ver.MC) ..." -ForegroundColor Yellow
         try {
-            $builds = Invoke-RestMethod "https://api.papermc.io/v2/projects/paper/versions/$mcVersion/builds"
-            $latest = $builds.builds[-1]
-            $dlName = $latest.downloads.application.name
-            $url = "https://api.papermc.io/v2/projects/paper/versions/$mcVersion/builds/$($latest.build)/downloads/$dlName"
-            Invoke-WebRequest $url -OutFile $serverJar
-            Write-Host "  Downloaded build $($latest.build)"
-        }
-        catch {
-            Write-Host "  ERROR: Could not download Paper $mcVersion - $_"
-            Write-Host "  Place paper.jar manually in $serverDir\ and re-run."
-            exit 1
-        }
+            $b = (Invoke-RestMethod "https://api.papermc.io/v2/projects/paper/versions/$($ver.MC)/builds").builds[-1]
+            Invoke-WebRequest "https://api.papermc.io/v2/projects/paper/versions/$($ver.MC)/builds/$($b.build)/downloads/$($b.downloads.application.name)" -OutFile $pj
+        } catch { Write-Host "  Download failed: $_" -ForegroundColor Red; exit 1 }
+    }
+    if (!(Test-Path "$sd\server.properties")) {
+        "online-mode=false","motd=Arrow & Slots Test","level-type=flat","gamemode=creative" | Set-Content "$sd\server.properties"
     }
 
-    # Create minimal server.properties for local testing
-    $sp = "$serverDir\server.properties"
-    if (-not (Test-Path $sp)) {
-        @(
-            "online-mode=false"
-            "motd=Arrow & Slots Test Server"
-            "level-type=flat"
-            "gamemode=creative"
-        ) | Set-Content $sp
-    }
-
-    Write-Host "  Starting Paper server..."
-    Write-Host "  (stop with Ctrl+C or type 'stop' in the console)"
+    Write-Host "  Starting Paper server ..." -ForegroundColor Green
+    Push-Location $sd; try { java -Xmx2G -Xms1G -jar paper.jar --nogui } finally { Pop-Location }
+} else {
+    Write-Host "  Launching $($mod.L) ..." -ForegroundColor Green
     Write-Host ""
-    Push-Location $serverDir
-    try {
-        java -Xmx2G -Xms1G -jar paper.jar --nogui
-    }
-    finally {
-        Pop-Location
-    }
-}
-else {
-    # ---- Fabric / NeoForge ----
-    Write-Host "  Launching $($selected.Label)..."
-    Write-Host ""
-    gradle $selected.Run --no-daemon --warning-mode summary
+    & gradle $mod.R --no-daemon --warning-mode summary
 }

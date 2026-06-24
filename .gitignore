@@ -1,6 +1,7 @@
 .gradle/
 build/
 builds/
+paper-server/
 run/
 runClient/
 runServer/
