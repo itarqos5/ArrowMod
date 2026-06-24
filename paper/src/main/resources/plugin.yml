@@ -2,5 +2,6 @@ name: ArrowAndSlots
 version: '${version}'
 main: gg.literal.arrowandslots.paper.ArrowAndSlotsPaper
 api-version: '1.21'
+folia-supported: true
 authors: [Literal]
 description: Draws ammunition from the hotbar slot directly above your bow so every shot uses the matching arrow.
