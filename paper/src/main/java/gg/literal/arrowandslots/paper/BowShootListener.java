@@ -35,11 +35,23 @@ public final class BowShootListener implements Listener {
 
             PlayerInventory inv = player.getInventory();
             int selected = inv.getHeldItemSlot();
-            int aboveSlot = selected + 9;
-            if (aboveSlot < 0 || aboveSlot >= inv.getSize()) return;
-
-            ItemStack aboveStack = inv.getItem(aboveSlot);
-            if (aboveStack == null || !ARROW_MATERIALS.contains(aboveStack.getType())) return;
+            
+            // In Bukkit PlayerInventory:
+            // 0-8: Hotbar
+            // 27-35: Bottom row of main inventory (directly above hotbar)
+            // 18-26: Middle row of main inventory
+            // 9-17: Top row of main inventory
+            int aboveSlot = selected + 27;
+            ItemStack aboveStack = (aboveSlot >= 0 && aboveSlot < 36) ? inv.getItem(aboveSlot) : null;
+            if (aboveStack == null || !ARROW_MATERIALS.contains(aboveStack.getType())) {
+                aboveSlot = selected + 18;
+                aboveStack = (aboveSlot >= 0 && aboveSlot < 36) ? inv.getItem(aboveSlot) : null;
+                if (aboveStack == null || !ARROW_MATERIALS.contains(aboveStack.getType())) {
+                    aboveSlot = selected + 9;
+                    aboveStack = (aboveSlot >= 0 && aboveSlot < 36) ? inv.getItem(aboveSlot) : null;
+                    if (aboveStack == null || !ARROW_MATERIALS.contains(aboveStack.getType())) return;
+                }
+            }
 
             boolean creative = player.getGameMode() == GameMode.CREATIVE;
 
