@@ -24,9 +24,22 @@ public abstract class PlayerMixin {
             ItemStack weaponStack, CallbackInfoReturnable<ItemStack> cir) {
         try {
             Player self = (Player) (Object) this;
-            ItemStack arrow = ArrowSlotHelper.findArrowAbove(self, weaponStack);
-            if (arrow != null) {
-                cir.setReturnValue(arrow);
+            int bowSlot = self.getInventory().selected;
+            ItemStack currentSelected = self.getInventory().getItem(bowSlot);
+            if (currentSelected.isEmpty() || !ItemStack.isSameItemSameComponents(currentSelected, weaponStack)) {
+                bowSlot = -1;
+                for (int i = 0; i < 9; i++) {
+                    if (ItemStack.isSameItemSameComponents(self.getInventory().getItem(i), weaponStack)) {
+                        bowSlot = i;
+                        break;
+                    }
+                }
+            }
+            if (bowSlot != -1) {
+                ItemStack arrow = ArrowSlotHelper.findArrowAbove(self, bowSlot, weaponStack);
+                if (arrow != null) {
+                    cir.setReturnValue(arrow);
+                }
             }
         } catch (Exception ignored) {
         }
