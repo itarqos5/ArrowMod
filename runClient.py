@@ -410,12 +410,13 @@ if mode["r"] == "paper":
     
     # Copy plugin
     libs = os.path.join(script_dir, "paper", "build", "libs")
-    jars = sorted([f for f in os.listdir(libs) if f.endswith(".jar") and "sources" not in f],
-                  key=lambda f: os.path.getmtime(os.path.join(libs, f)), reverse=True)
-    
-    # Make sure we clean up duplicate/old own jars first, then copy the new one
-    cleanup_own_jars(os.path.join(sd, "plugins"))
-    shutil.copy2(os.path.join(libs, jars[0]), os.path.join(sd, "plugins", jars[0]))
+    if os.path.exists(libs):
+        jars = sorted([f for f in os.listdir(libs) if f.endswith(".jar") and "sources" not in f],
+                      key=lambda f: os.path.getmtime(os.path.join(libs, f)), reverse=True)
+        if jars:
+            # Make sure we clean up duplicate/old own jars first, then copy the new one
+            cleanup_own_jars(os.path.join(sd, "plugins"))
+            shutil.copy2(os.path.join(libs, jars[0]), os.path.join(sd, "plugins", jars[0]))
     
     if not os.path.exists(pj):
         print(f"  {Y}Downloading Paper {ver['mc']} ...{S}")
