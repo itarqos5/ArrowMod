@@ -11,26 +11,16 @@ public final class ArrowSlotHelper {
     private ArrowSlotHelper() {}
 
     @Nullable
-    public static ItemStack findArrowAbove(Player player, ItemStack weaponStack) {
+    public static ItemStack findArrowAbove(Player player, int bowSlot, ItemStack weaponStack) {
         try {
             if (weaponStack.isEmpty() || !(weaponStack.getItem() instanceof BowItem)) return null;
 
-            ItemStack mainHand = player.getMainHandItem();
-            if (mainHand.isEmpty() || !(mainHand.getItem() instanceof BowItem)) return null;
-            if (!ItemStack.isSameItemSameComponents(mainHand, weaponStack)) return null;
-
             Inventory inv = player.getInventory();
-            int bowSlot = -1;
+            if (bowSlot < 0 || bowSlot >= 9) return null;
 
-            // The selected hotbar slot is the one whose stack is the player's current main-hand stack.
-            for (int i = 0; i < 9; i++) {
-                if (inv.getItem(i) == mainHand) {
-                    bowSlot = i;
-                    break;
-                }
-            }
-
-            if (bowSlot == -1) return null;
+            ItemStack selectedBow = inv.getItem(bowSlot);
+            if (selectedBow.isEmpty() || !(selectedBow.getItem() instanceof BowItem)) return null;
+            if (!ItemStack.isSameItemSameComponents(selectedBow, weaponStack)) return null;
 
             // The row directly above the hotbar in the inventory grid is bowSlot + 9
             int aboveSlot = bowSlot + 9;
