@@ -4,6 +4,15 @@ plugins {
 
 neoForge {
     version = rootProject.neoforge_version
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
 }
 
 dependencies {
